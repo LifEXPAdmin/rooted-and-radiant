@@ -16,7 +16,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  padding-bottom: 80px; /* Space for fixed audio player */
+  padding-top: 70px; /* Space for fixed nav at top */
+  padding-bottom: 80px; /* Space for fixed audio player at bottom */
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fade-in animation classes */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-in.opacity-100 {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Radiant background effect */
@@ -57,4 +75,29 @@ body {
 .radiant-bg > * {
   position: relative;
   z-index: 1;
+}
+
+/* Hide Next.js development indicator and overlay */
+[data-nextjs-toast],
+nextjs-portal,
+body > div[style*="position: fixed"][style*="bottom"],
+body > div[style*="position: fixed"][style*="left"],
+div[data-nextjs-route-info],
+div[data-nextjs-indicator] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide the N button specifically */
+button[data-nextjs-indicator],
+div[data-nextjs-indicator],
+a[data-nextjs-indicator] {
+  display: none !important;
+}
+
+/* Target the specific dev indicator that appears in bottom-left */
+body > div:last-child:has(> div[style*="position: fixed"]) {
+  display: none !important;
 }
