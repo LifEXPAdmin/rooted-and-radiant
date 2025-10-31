@@ -13,8 +13,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email notification
-    const recipientEmail = 'rooted.radiant.lydia@gmail.com';
-    const subject = 'New Newsletter Subscription';
+    // Note: With onboarding@resend.dev (unverified domain), emails can only be sent to the account owner
+    // Once domain is verified, you can send to any email. For now, sending to account owner who can forward
+    // Change back to 'rooted.radiant.lydia@gmail.com' after domain verification
+    const recipientEmail = process.env.RESEND_TO_EMAIL || 'mcdrew169@yahoo.com';
     const message = `
       New subscription to Rooted & Radiant newsletter:
       
@@ -55,7 +57,8 @@ export async function POST(request: NextRequest) {
         from: fromEmail,
         to: [recipientEmail],
         reply_to: 'rooted.radiant.lydia@gmail.com',
-        subject: subject,
+        // Include the subscriber email in the subject so it's visible in notifications
+        subject: `New Newsletter Subscription: ${email}`,
         text: message,
         html: `
           <h2>New Newsletter Subscription</h2>
