@@ -66,13 +66,20 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: await response.text() }));
-      console.error('Resend API error:', errorData);
+      let errorMessage = 'Unknown error';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+      } catch {
+        const errorText = await response.text();
+        errorMessage = errorText || 'Failed to send email';
+      }
+      console.error('Resend API error:', errorMessage);
       
       // Return more specific error message
       return NextResponse.json(
         { 
-          error: `Failed to send email: ${errorData.message || 'Unknown error'}` 
+          error: `Failed to send email: ${errorMessage}` 
         },
         { status: 500 }
       );
