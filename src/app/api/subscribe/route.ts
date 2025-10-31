@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email using Resend
+    // Using onboarding@resend.dev as fallback if domain not verified
+    // Update to your verified domain once it's set up in Resend
+    const fromEmail = 'Rooted & Radiant <onboarding@resend.dev>';
+    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -48,8 +52,9 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Rooted & Radiant <newsletter@rooted-and-radiant.wyatt-works.com>',
+        from: fromEmail,
         to: [recipientEmail],
+        reply_to: 'rooted.radiant.lydia@gmail.com',
         subject: subject,
         text: message,
         html: `
@@ -61,10 +66,20 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Resend API error:', error);
-      throw new Error('Failed to send email');
+      const errorData = await response.json().catch(() => ({ message: await response.text() }));
+      console.error('Resend API error:', errorData);
+      
+      // Return more specific error message
+      return NextResponse.json(
+        { 
+          error: `Failed to send email: ${errorData.message || 'Unknown error'}` 
+        },
+        { status: 500 }
+      );
     }
+
+    const responseData = await response.json();
+    console.log('Email sent successfully:', responseData);
 
     return NextResponse.json(
       { 
