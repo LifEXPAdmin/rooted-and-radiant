@@ -110,8 +110,7 @@ export default function Home() {
               <p>
                 <strong className="text-amber-900">Rooted & Radiant</strong> is a Christian podcast 
                 hosted by <strong className="text-amber-900">Lydia McCuen</strong>, created to help 
-                people grow in faith, find peace in the present, and live with confidence in who God 
-                created them to be.
+                people grow in faith, find peace in the present, and live with confidence in God who created them.
               </p>
               <p>
                 Each episode explores how to stay rooted in biblical truth while becoming radiant 
@@ -256,9 +255,14 @@ export default function Home() {
             <p className="text-sm text-amber-800" style={{ fontFamily: 'serif' }}>
               &copy; {new Date().getFullYear()} Rooted & Radiant. All rights reserved.
             </p>
-            <div className="mt-2 text-amber-700">
-              ✝
-            </div>
+            <p className="mt-2 text-xs text-amber-700 flex items-center justify-center gap-1.5" style={{ fontFamily: 'serif' }}>
+              Built with 
+              <svg width="8" height="14" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+                <rect x="13" y="2" width="6" height="28" rx="1.5" fill="#78350F" stroke="#451A03" strokeWidth="0.8"/>
+                <rect x="4" y="9" width="24" height="5" rx="1.5" fill="#78350F" stroke="#451A03" strokeWidth="0.8"/>
+              </svg>
+              by Wyatt Works
+            </p>
           </div>
         </div>
       </footer>
