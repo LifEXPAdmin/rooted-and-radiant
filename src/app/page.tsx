@@ -1,12 +1,15 @@
 'use client';
 
 import AudioPlayer from "@/components/AudioPlayer";
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const aboutRef = useRef<HTMLDivElement>(null);
   const episodesRef = useRef<HTMLDivElement>(null);
   const newsletterRef = useRef<HTMLDivElement>(null);
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     // Smooth fade-in animations on scroll
@@ -199,20 +202,76 @@ export default function Home() {
             <p className="text-xl text-amber-900 mb-8" style={{ fontFamily: 'serif' }}>
               Get new episodes & encouragement weekly
             </p>
-            <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900"
-                style={{ fontFamily: 'serif' }}
-              />
-              <button
-                type="submit"
-                className="px-8 py-3 bg-amber-900 text-white rounded-lg font-semibold hover:bg-amber-800 transition-all shadow-lg"
-                style={{ fontFamily: 'serif' }}
-              >
-                Subscribe
-              </button>
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!email || !email.includes('@')) {
+                  setStatus('error');
+                  setMessage('Please enter a valid email address');
+                  return;
+                }
+
+                setStatus('loading');
+                setMessage('');
+
+                try {
+                  const response = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email }),
+                  });
+
+                  const data = await response.json();
+
+                  if (response.ok) {
+                    setStatus('success');
+                    setMessage(data.message || 'Thank you for subscribing!');
+                    setEmail('');
+                  } else {
+                    setStatus('error');
+                    setMessage(data.error || 'Something went wrong. Please try again.');
+                  }
+                } catch (error) {
+                  setStatus('error');
+                  setMessage('Something went wrong. Please try again later.');
+                }
+              }}
+              className="flex flex-col gap-4 max-w-md mx-auto"
+            >
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  className="flex-1 px-4 py-3 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900"
+                  style={{ fontFamily: 'serif' }}
+                  disabled={status === 'loading'}
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="px-8 py-3 bg-amber-900 text-white rounded-lg font-semibold hover:bg-amber-800 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ fontFamily: 'serif' }}
+                >
+                  {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+                </button>
+              </div>
+              {message && (
+                <p 
+                  className={`text-sm px-4 py-2 rounded-lg ${
+                    status === 'success' 
+                      ? 'text-green-800 bg-green-100' 
+                      : 'text-red-800 bg-red-100'
+                  }`}
+                  style={{ fontFamily: 'serif' }}
+                >
+                  {message}
+                </p>
+              )}
             </form>
           </div>
         </div>
