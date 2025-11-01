@@ -1,39 +1,37 @@
-# Email Setup for Newsletter Subscription
+# Email Setup
 
-The subscribe button sends emails to `rooted.radiant.lydia@gmail.com` when someone subscribes.
+The subscribe form adds contacts to your MailerLite account.
 
-## Option 1: Using Resend (Recommended for Production)
+## Environment variables
 
-1. Sign up for a free account at [Resend](https://resend.com)
-2. Create an API key
-3. Add it to Vercel environment variables:
-   - Go to your Vercel project → Settings → Environment Variables
-   - Add: `RESEND_API_KEY` = your API key
-   - Redeploy the site
+Create a `.env.local` file (already added locally) with:
 
-## Option 2: Using Nodemailer with Gmail (Free)
+```
+MAILERLITE_API_KEY=your-mailerlite-api-key
+MAILERLITE_GROUP_ID=your-mailerlite-group-id
+```
 
-If you prefer using Gmail directly, we can update the API route to use nodemailer with Gmail SMTP. This requires:
-- A Gmail App Password (not your regular password)
-- Environment variables for Gmail credentials
+> In production (Vercel), add the same variables under Project → Settings → Environment Variables.
 
-Would you like me to set this up?
+## MailerLite configuration steps
 
-## Current Setup
+1. **Create a group** – In MailerLite go to **Subscribers → Groups → Add new group**. The API adds subscribers to this group.
+2. **Generate an API token** – Account settings → Integrations → Developer API → “Generate new token”. Copy this key; you’ll only see it once.
+3. **Find the Group ID** – Run the following command in a terminal, replacing `YOUR_API_KEY` with the token from step 2. The JSON response contains your group’s `id`:
 
-The API route is at `/api/subscribe` and:
-- Validates the email address
-- Sends a notification email to `rooted.radiant.lydia@gmail.com`
-- Shows success/error messages to the user
-- Works even without Resend configured (logs to console)
+   ```bash
+   curl -X GET \
+     https://api.mailerlite.com/api/v2/groups \
+     -H "X-MailerLite-ApiKey: YOUR_API_KEY"
+   ```
 
-## Testing
+4. **Update environment variables** – Put the API key and group id into `.env.local` (development) and Vercel project settings (production).
+5. **Redeploy** – Once the variables are set, redeploy the site so the new values take effect.
 
-To test the subscription form:
-1. Enter an email address
-2. Click Subscribe
-3. You should see a success message
-4. Check `rooted.radiant.lydia@gmail.com` for the notification email
+## API behaviour
 
-Note: Without Resend configured, subscriptions will be logged to the console. For production, add the Resend API key.
+- Successful subscription returns a success message.
+- If an email address is already on the list, MailerLite returns `409 Conflict`; the API treats this as success and tells the user they’re already subscribed.
+- Any other MailerLite API error is logged and returned as a friendly message to the user.
 
+The subscribe form now posts to `/api/subscribe`, which forwards the request to MailerLite using the values above.
