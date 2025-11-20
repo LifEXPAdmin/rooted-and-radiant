@@ -65,3 +65,4 @@ If the domain doesn't work after 24 hours:
 3. Ensure no conflicting records exist in Squarespace
 4. Contact Squarespace support if you need help with subdomain configuration
 
+

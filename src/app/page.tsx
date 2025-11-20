@@ -1,6 +1,7 @@
 'use client';
 
 import AudioPlayer from "@/components/AudioPlayer";
+import YouTubeEmbed from "@/components/YouTubeEmbed";
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
@@ -143,13 +144,13 @@ export default function Home() {
               Latest Episode
             </h2>
             
-            {/* Embedded Player - Placeholder for Spotify/YouTube embed */}
+            {/* YouTube Video Embed */}
             <div className="bg-white/80 rounded-lg shadow-xl p-8 mb-12 backdrop-blur-sm border border-amber-200/50">
-              <div className="aspect-video rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center">
-                <p className="text-amber-900 text-lg" style={{ fontFamily: 'serif' }}>
-                  Episode player will be embedded here
-                </p>
-              </div>
+              <YouTubeEmbed 
+                videoId="JXDSXsJ_aZc" 
+                title="Rooted & Radiant - Latest Episode"
+                className="w-full"
+              />
             </div>
           </div>
         </div>

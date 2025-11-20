@@ -35,3 +35,4 @@ MAILERLITE_GROUP_ID=your-mailerlite-group-id
 - Any other MailerLite API error is logged and returned as a friendly message to the user.
 
 The subscribe form now posts to `/api/subscribe`, which forwards the request to MailerLite using the values above.
+
