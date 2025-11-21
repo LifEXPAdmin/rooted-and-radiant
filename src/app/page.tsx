@@ -76,7 +76,7 @@ export default function Home() {
           {/* Listen On Buttons */}
           <div className="fade-in opacity-0 translate-y-8 transition-all duration-1000 delay-200 flex flex-wrap items-center justify-center gap-4">
             <a
-              href="https://open.spotify.com/show/YOUR_SPOTIFY_ID"
+              href="https://open.spotify.com/show/1Q8RFKLaFxfergWhsHlMa0"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 bg-amber-900 text-white rounded-lg font-semibold hover:bg-amber-800 transition-all hover:scale-105 shadow-lg"
