@@ -10,9 +10,9 @@ export default function BeAGuest() {
     phoneNumber: '',
     preferredContactMethod: '',
     testimonyDescription: '',
-    generalAvailability: '',
-    timeSlot: '',
-    flexibleAvailabilityNotes: '',
+    generalAvailability: [] as string[], // Changed to array for multi-select
+    selectedDateTimes: [{ date: '', time: '', id: `dt-${Date.now()}-init` }] as Array<{ date: string; time: string; id: string }>, // Start with one empty slot
+    otherTimes: '', // For "Other" option
     consentRecording: false,
     consentAge: false,
   });
@@ -40,32 +40,37 @@ export default function BeAGuest() {
     return () => observer.disconnect();
   }, []);
 
-  // Get time slot options based on availability selection
-  const getTimeSlotOptions = () => {
-    switch (guestForm.generalAvailability) {
-      case 'Weekdays':
-        return [
-          '9:00 am – 11:00 am',
-          '11:00 am – 1:00 pm',
-          '1:00 pm – 3:00 pm',
-          '3:00 pm – 5:00 pm',
-        ];
-      case 'Weeknights':
-        return [
-          '5:00 pm – 7:00 pm',
-          '7:00 pm – 9:00 pm',
-        ];
-      case 'Weekends':
-        return [
-          'Saturday morning',
-          'Saturday afternoon',
-          'Saturday evening',
-          'Sunday afternoon',
-          'Sunday evening',
-        ];
-      default:
-        return [];
-    }
+  // Add a new date/time slot
+  const addDateTimeSlot = () => {
+    const newId = `dt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setGuestForm({
+      ...guestForm,
+      selectedDateTimes: [...guestForm.selectedDateTimes, { date: '', time: '', id: newId }],
+    });
+  };
+
+  // Remove a date/time slot
+  const removeDateTimeSlot = (id: string) => {
+    setGuestForm({
+      ...guestForm,
+      selectedDateTimes: guestForm.selectedDateTimes.filter((dt) => dt.id !== id),
+    });
+  };
+
+  // Update a specific date/time slot
+  const updateDateTimeSlot = (id: string, field: 'date' | 'time', value: string) => {
+    setGuestForm({
+      ...guestForm,
+      selectedDateTimes: guestForm.selectedDateTimes.map((dt) =>
+        dt.id === id ? { ...dt, [field]: value } : dt
+      ),
+    });
+  };
+
+  // Get minimum date (today) for date picker
+  const getMinDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
   };
 
   return (
@@ -105,7 +110,7 @@ export default function BeAGuest() {
                   
                   // Validate required fields
                   if (!guestForm.fullName || !guestForm.email || !guestForm.preferredContactMethod || 
-                      !guestForm.testimonyDescription || !guestForm.generalAvailability || 
+                      !guestForm.testimonyDescription || guestForm.generalAvailability.length === 0 || 
                       !guestForm.consentRecording || !guestForm.consentAge) {
                     setGuestFormStatus('error');
                     setGuestFormMessage('Please fill in all required fields');
@@ -119,16 +124,18 @@ export default function BeAGuest() {
                     return;
                   }
 
-                  // Validate time slot or flexible availability notes
-                  if (guestForm.generalAvailability === "I'm flexible") {
-                    if (!guestForm.flexibleAvailabilityNotes || guestForm.flexibleAvailabilityNotes.trim() === '') {
-                      setGuestFormStatus('error');
-                      setGuestFormMessage('Please tell us about your availability');
-                      return;
-                    }
-                  } else if (!guestForm.timeSlot) {
+                  // Validate date/time selections
+                  if (guestForm.selectedDateTimes.length === 0 && !guestForm.otherTimes.trim()) {
                     setGuestFormStatus('error');
-                    setGuestFormMessage('Please select a preferred time slot');
+                    setGuestFormMessage('Please select at least one date and time, or provide other availability options');
+                    return;
+                  }
+
+                  // Validate each date/time slot is complete
+                  const incompleteSlots = guestForm.selectedDateTimes.filter((dt) => !dt.date || !dt.time);
+                  if (incompleteSlots.length > 0) {
+                    setGuestFormStatus('error');
+                    setGuestFormMessage('Please complete all selected date and time fields');
                     return;
                   }
 
@@ -143,9 +150,7 @@ export default function BeAGuest() {
                       },
                       body: JSON.stringify({
                         ...guestForm,
-                        // Include timeSlot or flexibleAvailabilityNotes based on availability selection
-                        timeSlot: guestForm.generalAvailability === "I'm flexible" ? '' : guestForm.timeSlot,
-                        flexibleAvailabilityNotes: guestForm.generalAvailability === "I'm flexible" ? guestForm.flexibleAvailabilityNotes : '',
+                        generalAvailability: guestForm.generalAvailability.join(', '), // Convert array to string for email
                       }),
                     });
 
@@ -161,9 +166,9 @@ export default function BeAGuest() {
                         phoneNumber: '',
                         preferredContactMethod: '',
                         testimonyDescription: '',
-                        generalAvailability: '',
-                        timeSlot: '',
-                        flexibleAvailabilityNotes: '',
+                        generalAvailability: [],
+                        selectedDateTimes: [{ date: '', time: '', id: `dt-${Date.now()}-reset` }],
+                        otherTimes: '',
                         consentRecording: false,
                         consentAge: false,
                       });
@@ -265,28 +270,35 @@ export default function BeAGuest() {
                   />
                 </div>
 
-                {/* General Availability */}
+                {/* General Availability - Multi-select */}
                 <div>
                   <label className="block text-amber-900 font-semibold mb-3" style={{ fontFamily: 'serif' }}>
                     General Availability <span className="text-red-500">*</span>
+                    <span className="text-sm font-normal text-amber-700 block mt-1 italic">
+                      (Select all that apply)
+                    </span>
                   </label>
                   <div className="space-y-2">
                     {['Weekdays', 'Weeknights', 'Weekends', "I'm flexible"].map((availability) => (
                       <label key={availability} className="flex items-center gap-3 cursor-pointer">
                         <input
-                          type="radio"
-                          name="generalAvailability"
+                          type="checkbox"
                           value={availability}
-                          checked={guestForm.generalAvailability === availability}
+                          checked={guestForm.generalAvailability.includes(availability)}
                           onChange={(e) => {
-                            setGuestForm({ 
-                              ...guestForm, 
-                              generalAvailability: e.target.value,
-                              timeSlot: '', // Reset time slot when availability changes
-                            });
+                            if (e.target.checked) {
+                              setGuestForm({
+                                ...guestForm,
+                                generalAvailability: [...guestForm.generalAvailability, availability],
+                              });
+                            } else {
+                              setGuestForm({
+                                ...guestForm,
+                                generalAvailability: guestForm.generalAvailability.filter((a) => a !== availability),
+                              });
+                            }
                           }}
-                          required
-                          className="w-4 h-4 text-amber-900 focus:ring-amber-500 border-amber-300"
+                          className="w-4 h-4 text-amber-900 focus:ring-amber-500 border-amber-300 rounded"
                         />
                         <span className="text-amber-900" style={{ fontFamily: 'serif' }}>{availability}</span>
                       </label>
@@ -294,48 +306,86 @@ export default function BeAGuest() {
                   </div>
                 </div>
 
-                {/* Dynamic Time Slot Options */}
-                {guestForm.generalAvailability && guestForm.generalAvailability !== "I'm flexible" && getTimeSlotOptions().length > 0 && (
-                  <div>
-                    <label className="block text-amber-900 font-semibold mb-3" style={{ fontFamily: 'serif' }}>
-                      Preferred Time Slot <span className="text-red-500">*</span>
-                    </label>
-                    <div className="space-y-2">
-                      {getTimeSlotOptions().map((slot) => (
-                        <label key={slot} className="flex items-center gap-3 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="timeSlot"
-                            value={slot}
-                            checked={guestForm.timeSlot === slot}
-                            onChange={(e) => setGuestForm({ ...guestForm, timeSlot: e.target.value })}
-                            required={guestForm.generalAvailability !== "I'm flexible"}
-                            className="w-4 h-4 text-amber-900 focus:ring-amber-500 border-amber-300"
-                          />
-                          <span className="text-amber-900" style={{ fontFamily: 'serif' }}>{slot}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Specific Date & Time Selection */}
+                <div>
+                  <label className="block text-amber-900 font-semibold mb-2" style={{ fontFamily: 'serif' }}>
+                    Select Specific Dates & Times <span className="text-red-500">*</span>
+                  </label>
+                  <p className="text-sm text-amber-700 mb-3 italic" style={{ fontFamily: 'serif' }}>
+                    Please select specific dates and times when you're available. You can add multiple date/time combinations. 
+                    <span className="font-semibold text-amber-800"> We prefer recording podcasts on Saturdays.</span>
+                  </p>
 
-                {/* Flexible Availability Notes */}
-                {guestForm.generalAvailability === "I'm flexible" && (
-                  <div>
-                    <label htmlFor="flexibleAvailabilityNotes" className="block text-amber-900 font-semibold mb-2" style={{ fontFamily: 'serif' }}>
-                      Tell us a little more about your availability <span className="text-red-500">*</span>
+                  {/* Date/Time Slots */}
+                  <div className="space-y-4 mb-4">
+                    {guestForm.selectedDateTimes.map((dateTime) => (
+                      <div key={dateTime.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                        <div className="flex-1">
+                          <label className="block text-amber-900 text-sm mb-1" style={{ fontFamily: 'serif' }}>
+                            Date
+                          </label>
+                          <input
+                            type="date"
+                            value={dateTime.date}
+                            onChange={(e) => updateDateTimeSlot(dateTime.id, 'date', e.target.value)}
+                            min={getMinDate()}
+                            required
+                            className="w-full px-4 py-2 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900"
+                            style={{ fontFamily: 'serif' }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-amber-900 text-sm mb-1" style={{ fontFamily: 'serif' }}>
+                            Time
+                          </label>
+                          <input
+                            type="time"
+                            value={dateTime.time}
+                            onChange={(e) => updateDateTimeSlot(dateTime.id, 'time', e.target.value)}
+                            required
+                            className="w-full px-4 py-2 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900"
+                            style={{ fontFamily: 'serif' }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeDateTimeSlot(dateTime.id)}
+                          className="px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+                          style={{ fontFamily: 'serif' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add More Date/Time Button */}
+                  <button
+                    type="button"
+                    onClick={addDateTimeSlot}
+                    className="px-4 py-2 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-lg transition-colors text-sm font-medium mb-4"
+                    style={{ fontFamily: 'serif' }}
+                  >
+                    + Add Another Date & Time
+                  </button>
+
+                  {/* Other Times Option */}
+                  <div className="mt-4">
+                    <label htmlFor="otherTimes" className="block text-amber-900 font-semibold mb-2" style={{ fontFamily: 'serif' }}>
+                      Other Availability Times
+                      <span className="text-sm font-normal text-amber-600"> (optional - for times not listed above, e.g., late evening)</span>
                     </label>
                     <textarea
-                      id="flexibleAvailabilityNotes"
-                      value={guestForm.flexibleAvailabilityNotes}
-                      onChange={(e) => setGuestForm({ ...guestForm, flexibleAvailabilityNotes: e.target.value })}
-                      required
+                      id="otherTimes"
+                      value={guestForm.otherTimes}
+                      onChange={(e) => setGuestForm({ ...guestForm, otherTimes: e.target.value })}
                       rows={3}
+                      placeholder="Please describe any other times you're available (e.g., 'Late evenings after 9pm', 'Early mornings before 7am')"
                       className="w-full px-4 py-3 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 resize-y"
                       style={{ fontFamily: 'serif' }}
                     />
                   </div>
-                )}
+                </div>
 
                 {/* Consent Checkboxes */}
                 <div className="space-y-4 pt-4 border-t border-amber-200">
