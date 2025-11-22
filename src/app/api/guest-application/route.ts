@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate time slot or flexible availability notes
-    if (generalAvailability === 'I'm flexible') {
+    if (generalAvailability === "I'm flexible") {
       if (!flexibleAvailabilityNotes || flexibleAvailabilityNotes.trim() === '') {
         return NextResponse.json(
           { error: 'Please provide availability details' },
@@ -61,7 +61,7 @@ Preferred Contact Method: ${preferredContactMethod}
 
 AVAILABILITY:
 General Availability: ${generalAvailability}
-${generalAvailability === 'I'm flexible' 
+${generalAvailability === "I'm flexible" 
   ? `Additional Notes: ${flexibleAvailabilityNotes}` 
   : `Selected Time Slot: ${timeSlot}`}
 

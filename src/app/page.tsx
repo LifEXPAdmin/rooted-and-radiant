@@ -230,7 +230,7 @@ export default function Home() {
                   }
 
                   // Validate time slot or flexible availability notes
-                  if (guestForm.generalAvailability === 'I'm flexible') {
+                  if (guestForm.generalAvailability === "I'm flexible") {
                     if (!guestForm.flexibleAvailabilityNotes || guestForm.flexibleAvailabilityNotes.trim() === '') {
                       setGuestFormStatus('error');
                       setGuestFormMessage('Please tell us about your availability');
@@ -254,8 +254,8 @@ export default function Home() {
                       body: JSON.stringify({
                         ...guestForm,
                         // Include timeSlot or flexibleAvailabilityNotes based on availability selection
-                        timeSlot: guestForm.generalAvailability === 'I'm flexible' ? '' : guestForm.timeSlot,
-                        flexibleAvailabilityNotes: guestForm.generalAvailability === 'I'm flexible' ? guestForm.flexibleAvailabilityNotes : '',
+                        timeSlot: guestForm.generalAvailability === "I'm flexible" ? '' : guestForm.timeSlot,
+                        flexibleAvailabilityNotes: guestForm.generalAvailability === "I'm flexible" ? guestForm.flexibleAvailabilityNotes : '',
                       }),
                     });
 
@@ -381,7 +381,7 @@ export default function Home() {
                     General Availability <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-2">
-                    {['Weekdays', 'Weeknights', 'Weekends', 'I'm flexible'].map((availability) => (
+                    {['Weekdays', 'Weeknights', 'Weekends', "I'm flexible"].map((availability) => (
                       <label key={availability} className="flex items-center gap-3 cursor-pointer">
                         <input
                           type="radio"
@@ -405,7 +405,7 @@ export default function Home() {
                 </div>
 
                 {/* Dynamic Time Slot Options */}
-                {guestForm.generalAvailability && guestForm.generalAvailability !== 'I'm flexible' && getTimeSlotOptions().length > 0 && (
+                {guestForm.generalAvailability && guestForm.generalAvailability !== "I'm flexible" && getTimeSlotOptions().length > 0 && (
                   <div>
                     <label className="block text-amber-900 font-semibold mb-3" style={{ fontFamily: 'serif' }}>
                       Preferred Time Slot <span className="text-red-500">*</span>
@@ -419,7 +419,7 @@ export default function Home() {
                             value={slot}
                             checked={guestForm.timeSlot === slot}
                             onChange={(e) => setGuestForm({ ...guestForm, timeSlot: e.target.value })}
-                            required={guestForm.generalAvailability !== 'I'm flexible'}
+                            required={guestForm.generalAvailability !== "I'm flexible"}
                             className="w-4 h-4 text-amber-900 focus:ring-amber-500 border-amber-300"
                           />
                           <span className="text-amber-900" style={{ fontFamily: 'serif' }}>{slot}</span>
@@ -430,7 +430,7 @@ export default function Home() {
                 )}
 
                 {/* Flexible Availability Notes */}
-                {guestForm.generalAvailability === 'I'm flexible' && (
+                {guestForm.generalAvailability === "I'm flexible" && (
                   <div>
                     <label htmlFor="flexibleAvailabilityNotes" className="block text-amber-900 font-semibold mb-2" style={{ fontFamily: 'serif' }}>
                       Tell us a little more about your availability <span className="text-red-500">*</span>
