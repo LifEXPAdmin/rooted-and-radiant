@@ -10,7 +10,6 @@ export default function BeAGuest() {
     phoneNumber: '',
     preferredContactMethod: '',
     testimonyDescription: '',
-    generalAvailability: [] as string[], // Changed to array for multi-select
     selectedDateTimes: [{ date: '', time: '', id: `dt-${Date.now()}-init` }] as Array<{ date: string; time: string; id: string }>, // Start with one empty slot
     otherTimes: '', // For "Other" option
     consentRecording: false,
@@ -18,6 +17,7 @@ export default function BeAGuest() {
   });
   const [guestFormStatus, setGuestFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [guestFormMessage, setGuestFormMessage] = useState('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     // Smooth fade-in animations on scroll
@@ -108,37 +108,61 @@ export default function BeAGuest() {
                 onSubmit={async (e) => {
                   e.preventDefault();
                   
-                  // Validate required fields
-                  if (!guestForm.fullName || !guestForm.email || !guestForm.preferredContactMethod || 
-                      !guestForm.testimonyDescription || guestForm.generalAvailability.length === 0 || 
-                      !guestForm.consentRecording || !guestForm.consentAge) {
-                    setGuestFormStatus('error');
-                    setGuestFormMessage('Please fill in all required fields');
-                    return;
+                  // Scroll to top on validation error
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  
+                  // Collect all validation errors
+                  const errors: string[] = [];
+                  
+                  // Validate each field individually
+                  if (!guestForm.fullName || guestForm.fullName.trim() === '') {
+                    errors.push('Please enter your full name');
                   }
-
-                  // Validate email
-                  if (!guestForm.email.includes('@')) {
-                    setGuestFormStatus('error');
-                    setGuestFormMessage('Please enter a valid email address');
-                    return;
+                  
+                  if (!guestForm.email || guestForm.email.trim() === '') {
+                    errors.push('Please enter your email address');
+                  } else if (!guestForm.email.includes('@') || !guestForm.email.includes('.')) {
+                    errors.push('Please enter a valid email address');
                   }
-
+                  
+                  if (!guestForm.preferredContactMethod) {
+                    errors.push('Please select your preferred contact method');
+                  }
+                  
+                  if (!guestForm.testimonyDescription || guestForm.testimonyDescription.trim() === '') {
+                    errors.push('Please share your testimony description');
+                  }
+                  
                   // Validate date/time selections
-                  if (guestForm.selectedDateTimes.length === 0 && !guestForm.otherTimes.trim()) {
-                    setGuestFormStatus('error');
-                    setGuestFormMessage('Please select at least one date and time, or provide other availability options');
-                    return;
+                  const validDateTimes = guestForm.selectedDateTimes.filter((dt) => dt.date && dt.time);
+                  if (validDateTimes.length === 0 && (!guestForm.otherTimes || guestForm.otherTimes.trim() === '')) {
+                    errors.push('Please select at least one date and time, or provide other availability options');
                   }
-
-                  // Validate each date/time slot is complete
-                  const incompleteSlots = guestForm.selectedDateTimes.filter((dt) => !dt.date || !dt.time);
+                  
+                  // Check for incomplete date/time slots
+                  const incompleteSlots = guestForm.selectedDateTimes.filter((dt) => (dt.date && !dt.time) || (!dt.date && dt.time));
                   if (incompleteSlots.length > 0) {
+                    errors.push('Please complete all date and time fields (both date and time are required for each slot)');
+                  }
+                  
+                  if (!guestForm.consentRecording) {
+                    errors.push('Please confirm your consent for recording and sharing');
+                  }
+                  
+                  if (!guestForm.consentAge) {
+                    errors.push('Please confirm you are at least 18 years old or have parental permission');
+                  }
+                  
+                  // If there are errors, show them and stop
+                  if (errors.length > 0) {
                     setGuestFormStatus('error');
-                    setGuestFormMessage('Please complete all selected date and time fields');
+                    setValidationErrors(errors);
+                    setGuestFormMessage('Please fix the following issues:');
                     return;
                   }
-
+                  
+                  // Clear any previous errors
+                  setValidationErrors([]);
                   setGuestFormStatus('loading');
                   setGuestFormMessage('');
 
@@ -150,7 +174,6 @@ export default function BeAGuest() {
                       },
                       body: JSON.stringify({
                         ...guestForm,
-                        generalAvailability: guestForm.generalAvailability.join(', '), // Convert array to string for email
                       }),
                     });
 
@@ -166,19 +189,21 @@ export default function BeAGuest() {
                         phoneNumber: '',
                         preferredContactMethod: '',
                         testimonyDescription: '',
-                        generalAvailability: [],
                         selectedDateTimes: [{ date: '', time: '', id: `dt-${Date.now()}-reset` }],
                         otherTimes: '',
                         consentRecording: false,
                         consentAge: false,
                       });
+                      setValidationErrors([]);
                     } else {
                       setGuestFormStatus('error');
-                      setGuestFormMessage(data.error || 'Something went wrong. Please try again.');
+                      setValidationErrors([data.error || 'Something went wrong. Please try again.']);
+                      setGuestFormMessage('Please fix the following issues:');
                     }
                   } catch (error) {
                     setGuestFormStatus('error');
-                    setGuestFormMessage('Something went wrong. Please try again later.');
+                    setValidationErrors(['Something went wrong. Please try again later.']);
+                    setGuestFormMessage('Please fix the following issues:');
                   }
                 }}
                 className="space-y-6"
@@ -268,42 +293,6 @@ export default function BeAGuest() {
                     className="w-full px-4 py-3 rounded-lg border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-amber-900 resize-y"
                     style={{ fontFamily: 'serif' }}
                   />
-                </div>
-
-                {/* General Availability - Multi-select */}
-                <div>
-                  <label className="block text-amber-900 font-semibold mb-3" style={{ fontFamily: 'serif' }}>
-                    General Availability <span className="text-red-500">*</span>
-                    <span className="text-sm font-normal text-amber-700 block mt-1 italic">
-                      (Select all that apply)
-                    </span>
-                  </label>
-                  <div className="space-y-2">
-                    {['Weekdays', 'Weeknights', 'Weekends', "I'm flexible"].map((availability) => (
-                      <label key={availability} className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          value={availability}
-                          checked={guestForm.generalAvailability.includes(availability)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setGuestForm({
-                                ...guestForm,
-                                generalAvailability: [...guestForm.generalAvailability, availability],
-                              });
-                            } else {
-                              setGuestForm({
-                                ...guestForm,
-                                generalAvailability: guestForm.generalAvailability.filter((a) => a !== availability),
-                              });
-                            }
-                          }}
-                          className="w-4 h-4 text-amber-900 focus:ring-amber-500 border-amber-300 rounded"
-                        />
-                        <span className="text-amber-900" style={{ fontFamily: 'serif' }}>{availability}</span>
-                      </label>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Specific Date & Time Selection */}
@@ -439,6 +428,13 @@ export default function BeAGuest() {
                     style={{ fontFamily: 'serif' }}
                   >
                     {guestFormMessage}
+                    {validationErrors.length > 0 && (
+                      <ul className="mt-2 list-disc list-inside space-y-1">
+                        {validationErrors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
               </form>

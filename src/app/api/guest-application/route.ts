@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
       phoneNumber,
       preferredContactMethod,
       testimonyDescription,
-      generalAvailability,
       selectedDateTimes,
       otherTimes,
       consentRecording,
@@ -17,12 +16,7 @@ export async function POST(request: NextRequest) {
     } = formData;
 
     // Validate required fields
-    // Check if generalAvailability exists (could be array or string)
-    const hasGeneralAvailability = Array.isArray(generalAvailability) 
-      ? generalAvailability.length > 0 
-      : (generalAvailability && generalAvailability.trim() !== '');
-    
-    if (!fullName || !email || !preferredContactMethod || !testimonyDescription || !hasGeneralAvailability || !consentRecording || !consentAge) {
+    if (!fullName || !email || !preferredContactMethod || !testimonyDescription || !consentRecording || !consentAge) {
       return NextResponse.json(
         { error: 'Please fill in all required fields' },
         { status: 400 }
@@ -33,18 +27,6 @@ export async function POST(request: NextRequest) {
     if (!email.includes('@') || !email.includes('.')) {
       return NextResponse.json(
         { error: 'Please provide a valid email address' },
-        { status: 400 }
-      );
-    }
-
-    // Validate that generalAvailability is not empty (could be string or array)
-    const generalAvailStr = Array.isArray(generalAvailability) 
-      ? generalAvailability.join(', ') 
-      : (generalAvailability || '');
-    
-    if (!generalAvailStr || generalAvailStr.trim() === '') {
-      return NextResponse.json(
-        { error: 'Please select at least one general availability option' },
         { status: 400 }
       );
     }
@@ -99,7 +81,6 @@ Phone: ${phoneNumber || 'Not provided'}
 Preferred Contact Method: ${preferredContactMethod}
 
 AVAILABILITY:
-General Availability: ${generalAvailStr}
 ${dateTimeSlotsText}${otherTimes ? `\nOther Availability Times:\n${otherTimes}` : ''}
 
 TESTIMONY:
